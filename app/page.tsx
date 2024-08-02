@@ -49,6 +49,10 @@ const LoginPage = () => {
       }
       // Store user info and token in cookies
       setUserAuth(userData, response?.data?.token);
+      toast.success("Login Successful", {
+        autoClose: 2000,
+        hideProgressBar: true,
+      })
 
       // Redirect to products page
       router.push(APP_PRODUCTS_LIST_URL);
