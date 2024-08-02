@@ -8,7 +8,7 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table';
 import { Product, ProductDetails } from '@/types/product';
-import { Button } from '@mui/material';
+import { Button, Pagination } from '@mui/material';
 import { PRODUCT_GET_LIST_API_URL } from '@/utils/apiURLS';
 import ReviewModalBox from '@/Components/ReviewModalBox';
 
@@ -66,10 +66,13 @@ const ProductList = () => {
   const [selectedProduct, setSelectedProduct] = useState<ProductDetails | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const limit = 10; // Number of items per page
 
-  const getProducts = async (): Promise<Product[]> => {
-    const response = await axios.get(PRODUCT_GET_LIST_API_URL);
-    return response.data.products;
+  const getProducts = async (limit: number, skip: number): Promise<{ products: Product[], total: number }> => {
+    const response = await axios.get(`${PRODUCT_GET_LIST_API_URL}?limit=${limit}&skip=${skip}`);
+    return response.data;
   };
 
   const getProductDetails = async (id: number): Promise<ProductDetails> => {
@@ -85,12 +88,18 @@ const ProductList = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const productList = await getProducts();
+      const skip = (page - 1) * limit;
+      const { products: productList, total } = await getProducts(limit, skip);
       setProducts(productList);
+      setTotalPages(Math.ceil(total / limit));
     };
 
     fetchProducts();
-  }, []);
+  }, [page]);
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
 
   const productsWithAction = products.map((product) => ({
     ...product,
@@ -102,7 +111,7 @@ const ProductList = () => {
     columns,
     getCoreRowModel: getCoreRowModel(),
     autoResetPageIndex: false,
-autoResetExpanded: false,
+    autoResetExpanded: false,
   });
 
   return (
@@ -134,6 +143,15 @@ autoResetExpanded: false,
           </tbody>
         </table>
       </div>
+      <div className="mt-4 flex justify-center">
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={handlePageChange}
+          color="primary"
+        />
+      </div>
+
       {selectedProduct && (
         <ReviewModalBox
           open={open}
